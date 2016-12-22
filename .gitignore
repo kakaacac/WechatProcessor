@@ -90,3 +90,5 @@ ENV/
 
 config.py
 test.py
+
+.idea/
