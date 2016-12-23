@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask_restful import Resource, reqparse
+from flask import make_response
 
 from .config import Config
 from .functions import hash_sha1_string
@@ -20,7 +21,9 @@ class WechatMessageApi(Resource):
 
         sign = hash_sha1_string("".join(sorted([args["timestamp"], args["nonce"], Config.WECHAT_CONFIG["token"]])))
 
-        return (args["echostr"], 200) if sign == args["signature"] else (None, 400)
+        rep = make_response(args["echostr"], 200) if sign == args["signature"] else make_response("", 400)
+        rep.headers["Content-Type"] = 'text/plain'
+        return rep
 
     def post(self):
         pass
