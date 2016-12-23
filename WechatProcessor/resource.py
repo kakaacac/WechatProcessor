@@ -20,7 +20,7 @@ class WechatMessageApi(Resource):
 
         sign = hash_sha1_string("".join(sorted([args["timestamp"], args["nonce"], Config.WECHAT_CONFIG["token"]])))
 
-        return args["echostr"], 200 if sign == args["signature"] else None, 400
+        return (args["echostr"], 200) if sign == args["signature"] else (None, 400)
 
     def post(self):
         pass
