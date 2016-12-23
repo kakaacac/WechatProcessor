@@ -5,7 +5,7 @@ from flask_restful import Api
 from WechatProcessor import WechatMessageApi
 
 app = Flask(__name__)
-api = Api(app)
+api = Api(app, prefix="wechat")
 
 api.add_resource(WechatMessageApi, "/message")
 
