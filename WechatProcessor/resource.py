@@ -33,8 +33,15 @@ class WechatMessageApi(Resource):
         self.parser.add_argument("openid", location='args', store_missing=False)
         self.parser.add_argument("msg_signature", location='args', store_missing=False)
         args = self.parser.parse_args()
-        print(request.data)
+
         if self.messager.verify(args.get("signature"), args.get("timestamp"), args.get("nonce")):
-            return make_response("success", 200)
+            received_data = self.messager.extract_msg_to_dict(request.data,
+                                                              args.get("msg_signature"),
+                                                              args.get("timestamp"),
+                                                              args.get("nonce"))
+            received_msg = received_data["Content"]
+            response = self.messager.get_response("后台开发中！不要心急\n你的消息是{}".format(received_msg))
+            return make_response(response, 200)
+
         else:
             return make_response("failed", 200)

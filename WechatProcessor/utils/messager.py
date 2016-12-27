@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+import base64
+import struct
+import socket
+from Crypto.Cipher import AES
 from xml.etree.ElementTree import Element, tostring, fromstring
 
 from WechatProcessor.config import Config
-from .functions import hash_sha1
+from .functions import hash_sha1, random_string, timestamp
 
 
 class XMLParser(object):
@@ -63,9 +67,23 @@ class XMLParser(object):
 
 
 class WechatMessager:
-    def __init__(self, app_id=None, token=None):
+    RESPONSE_TEMPLATE = """
+    <xml>
+    <Encrypt><![CDATA[{encrypted_msg}]]></Encrypt>
+    <MsgSignature><![CDATA[{signature}]]></MsgSignature>
+    <TimeStamp>{timestamp}</TimeStamp>
+    <Nonce><![CDATA[{nonce}]]></Nonce>
+    </xml>
+    """
+
+    def __init__(self, app_id=None, token=None, msg_key=None):
         self.app_id = Config.WECHAT_CONFIG["app_id"] if app_id is None else app_id
         self.token = Config.WECHAT_CONFIG["token"] if token is None else token
+
+        key = Config.WECHAT_CONFIG["msg_key"] if msg_key is None else msg_key
+        self.msg_key = base64.b64decode(key + "=")
+
+        self.xml_parser = XMLParser()
 
     def sign(self, *args):
         if len(args) == 1 and isinstance(args[0], (tuple, list)):
@@ -76,5 +94,65 @@ class WechatMessager:
         data.append(self.token)
         return hash_sha1("".join(sorted(data)))
 
-    def verify(self, sign, *args):
-        return sign == self.sign(*args)
+    def verify(self, sign, *sign_args):
+        return sign == self.sign(*sign_args)
+
+    def decrypt(self, data, utf8=True):
+        cryptor = AES.new(self.msg_key, AES.MODE_CBC, self.msg_key[:16])
+        plain_text = cryptor.decrypt(data)
+
+        pad = ord(plain_text.decode("utf-8")[-1])
+        content = plain_text[16:-pad]
+
+        l = socket.ntohl(struct.unpack("I",content[:4])[0])
+        content = content[4:4 + l]
+
+        return content.decode("utf-8") if utf8 else content
+
+    def encrypt(self, data):
+        text = random_string(16).encode() + struct.pack("I", socket.htonl(len(data))) + data.encode() + self.app_id.encode()
+        text = self.pkcs7encode(text)
+
+        cryptor = AES.new(self.msg_key, AES.MODE_CBC, self.msg_key[:16])
+        try:
+            ciphertext = cryptor.encrypt(text)
+            return base64.b64encode(ciphertext)
+        except Exception as e:
+            raise
+
+    @staticmethod
+    def pkcs7encode(data, block_size=32):
+        num = block_size - (len(data) % block_size)
+        pad = chr(num).encode()
+        return data + pad * num
+
+    def get_response(self, reply):
+        nonce = random_string(16)
+        ts = timestamp()
+
+        encrypted_msg = self.encrypt(reply)
+        sign = self.sign(nonce, ts, encrypted_msg.decode())
+
+        response_data = self.RESPONSE_TEMPLATE.format(**{
+            "encrypted_msg": encrypted_msg,
+            "signature": sign,
+            "timestamp": ts,
+            "nonce": nonce
+        })
+
+        return response_data
+
+    def extract_msg(self, data, msg_sign, *sign_args):
+        received_data = self.xml_parser.xml_to_dict(data)
+        try:
+            encrypted_data = received_data["Encrypt"]
+            if self.verify(msg_sign, encrypted_data, *sign_args):
+                return self.decrypt(base64.b64decode(encrypted_data))
+            else:
+                return None
+        except KeyError as e:
+            raise
+
+    def extract_msg_to_dict(self, data, msg_sign, *sign_args):
+        return self.xml_parser.xml_to_dict(self.extract_msg(data, msg_sign, *sign_args))
+
