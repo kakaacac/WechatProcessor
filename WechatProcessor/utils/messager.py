@@ -2,7 +2,8 @@
 from xml.etree.ElementTree import Element, tostring, fromstring
 
 from WechatProcessor.config import Config
-from .functions import hash_sha1_string
+from .functions import hash_sha1
+
 
 class XMLParser(object):
     def __init__(self, dictionary=None, xml_str=None):
@@ -73,7 +74,7 @@ class WechatMessager:
             data = list(args)
 
         data.append(self.token)
-        return hash_sha1_string("".join(sorted(data)))
+        return hash_sha1("".join(sorted(data)))
 
     def verify(self, sign, *args):
         return sign == self.sign(*args)
