@@ -16,7 +16,6 @@ class WechatMessager:
 
         key = Config.WECHAT_CONFIG["msg_key"] if msg_key is None else msg_key
         self.msg_key = base64.b64decode(key + "=")
-        self.cryptor = AES.new(self.msg_key, AES.MODE_CBC, self.msg_key[:16])
 
         self.xml_parser = XMLParser()
 
@@ -33,7 +32,8 @@ class WechatMessager:
         return sign == self.sign(*sign_args)
 
     def decrypt(self, data, utf8=True):
-        plain_text = self.cryptor.decrypt(data)
+        cryptor = AES.new(self.msg_key, AES.MODE_CBC, self.msg_key[:16])
+        plain_text = cryptor.decrypt(data)
 
         pad = ord(plain_text.decode()[-1])
         content = plain_text[16:-pad]
@@ -46,9 +46,9 @@ class WechatMessager:
     def encrypt(self, data):
         text = random_string(16).encode() + struct.pack("I", socket.htonl(len(data))) + data.encode() + self.app_id.encode()
         text = self.pkcs7encode(text)
-
         try:
-            ciphertext = self.cryptor.encrypt(text)
+            cryptor = AES.new(self.msg_key, AES.MODE_CBC, self.msg_key[:16])
+            ciphertext = cryptor.encrypt(text)
             return base64.b64encode(ciphertext)
         except Exception as e:
             raise

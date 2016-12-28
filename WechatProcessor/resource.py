@@ -41,7 +41,7 @@ class WechatMessageApi(Resource):
                                                               args.get("nonce"))
             received_msg = received_data["Content"]
             response = self.messager.get_response("后台开发中！不要心急\n你的消息是{}".format(received_msg))
-            return make_response(response, 200)
+            return make_response(response.decode(), 200)
 
         else:
             return make_response("failed", 200)
