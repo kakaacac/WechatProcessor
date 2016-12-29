@@ -60,10 +60,11 @@ class WechatMessager:
         pad = chr(num)
         return data + pad.encode() * num
 
-    def get_response(self, reply):
+    def get_response(self, content, from_user, to_user):
         nonce = random_string(16)
         ts = timestamp()
 
+        reply = self.get_reply_xml(content, from_user, to_user, ts).decode()
         encrypted_msg = self.encrypt(reply).decode()
         sign = self.sign(nonce, ts, encrypted_msg)
 
@@ -75,6 +76,15 @@ class WechatMessager:
         }
 
         return self.xml_parser.dict_to_xml(response_data)
+
+    def get_reply_xml(self, content, from_user, to_user, timestamp):
+        return self.xml_parser.dict_to_xml({
+            "ToUserName": (to_user, "CDATA"),
+            "FromUserName": (from_user, "CDATA"),
+            "CreateTime": timestamp,
+            "MsgType": ("text", "CDATA"),
+            "Content": (content, "CDATA"),
+        })
 
     def extract_msg(self, data, msg_sign, *sign_args):
         received_data = self.xml_parser.xml_to_dict(data)
