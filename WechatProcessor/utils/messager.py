@@ -44,8 +44,9 @@ class WechatMessager:
         return content.decode() if utf8 else content
 
     def encrypt(self, data):
-        text = random_string(16).encode() + struct.pack("I", socket.htonl(len(data))) + data.encode() + self.app_id.encode()
-        text = self.pkcs7encode(text)
+        text = random_string(16) + struct.pack("I", socket.htonl(len(data.encode()))).decode() + data + self.app_id
+        text = self.pkcs7encode(text.encode())
+
         try:
             cryptor = AES.new(self.msg_key, AES.MODE_CBC, self.msg_key[:16])
             ciphertext = cryptor.encrypt(text)
@@ -56,8 +57,8 @@ class WechatMessager:
     @staticmethod
     def pkcs7encode(data, block_size=32):
         num = block_size - (len(data) % block_size)
-        pad = chr(num).encode()
-        return data + pad * num
+        pad = chr(num)
+        return data + pad.encode() * num
 
     def get_response(self, reply):
         nonce = random_string(16)
