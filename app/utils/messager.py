@@ -4,7 +4,7 @@ import struct
 import socket
 from Crypto.Cipher import AES
 
-from WechatProcessor.config import Config
+from app.config import Config
 from .functions import hash_sha1, random_string, timestamp
 from .xml_parser import XMLParser
 

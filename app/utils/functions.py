@@ -19,7 +19,7 @@ def hash_sha1(string):
 
 def random_string(n):
     random.seed(time.time())
-    return "".join(random.sample(ascii_letters + digits, n))
+    return "".join([random.choice(ascii_letters + digits) for _ in range(n)])
 
 
 def timestamp():

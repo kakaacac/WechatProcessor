@@ -41,6 +41,7 @@ class WechatMessageApi(Resource):
                                                               args.get("nonce"))
             user = received_data["FromUserName"]
             received_msg = received_data["Content"]
+            print(received_data)
             reply = "I am still working on the server, please be patient.\nYour message: {}".format(received_msg)
 
             response = self.messager.get_response(reply, Config.WECHAT_CONFIG["wechat_id"], user)
