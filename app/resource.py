@@ -4,6 +4,7 @@ from flask import make_response, request
 
 from .config import Config
 from .utils.messager import WechatMessager
+from .models import db, Message
 
 __all__ = ('WechatMessageApi',)
 
@@ -45,7 +46,7 @@ class WechatMessageApi(Resource):
             reply = "I am still working on the server, please be patient.\nYour message: {}".format(received_msg)
 
             response = self.messager.get_response(reply, Config.WECHAT_CONFIG["wechat_id"], user)
-            return make_response(response.decode(), 200)
+            return make_response(response, 200)
 
         else:
-            return make_response("failed", 200)
+            return make_response("Failed to verify message", 200)

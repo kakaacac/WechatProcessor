@@ -45,26 +45,27 @@ class WechatMessager:
 
     def encrypt(self, data):
         text = random_string(16) + struct.pack("I", socket.htonl(len(data.encode()))).decode() + data + self.app_id
-        text = self.pkcs7encode(text.encode())
+        encoded_text = self.pkcs7encode(text)
 
         try:
             cryptor = AES.new(self.msg_key, AES.MODE_CBC, self.msg_key[:16])
-            ciphertext = cryptor.encrypt(text)
+            ciphertext = cryptor.encrypt(encoded_text)
             return base64.b64encode(ciphertext)
         except Exception as e:
             raise
 
     @staticmethod
     def pkcs7encode(data, block_size=32):
-        num = block_size - (len(data) % block_size)
+        encoded_data = data.encode()
+        num = block_size - (len(encoded_data) % block_size)
         pad = chr(num)
-        return data + pad.encode() * num
+        return encoded_data + pad.encode() * num
 
     def get_response(self, content, from_user, to_user):
         nonce = random_string(16)
         ts = timestamp()
 
-        reply = self.get_reply_xml(content, from_user, to_user, ts).decode()
+        reply = self.get_reply_xml(content, from_user, to_user, ts)
         encrypted_msg = self.encrypt(reply).decode()
         sign = self.sign(nonce, ts, encrypted_msg)
 

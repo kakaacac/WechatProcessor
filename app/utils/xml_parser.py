@@ -40,7 +40,7 @@ class XMLParser(object):
                 xml_element.append(sub_elem)
 
     def dict_to_xml(self, d=None, root="xml"):
-        return etree.tostring(self.dict_to_xml_element(d, root))
+        return etree.tounicode(self.dict_to_xml_element(d, root))
 
     def to_xml(self):
         return self.dict_to_xml(self.dictionary) if self.dictionary else None
