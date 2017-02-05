@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 from flask_restful import Resource, reqparse
 from flask import make_response, request
 
@@ -17,7 +18,7 @@ class WechatMessageApi(Resource):
 
         self.messager = WechatMessager()
 
-    # Called by Wechat for verification of server's URL
+    # Called by Wechat to verify server's URL
     def get(self):
         self.parser.add_argument("echostr", location='args', store_missing=False)
         args = self.parser.parse_args()
@@ -42,7 +43,13 @@ class WechatMessageApi(Resource):
                                                               args.get("nonce"))
             user = received_data["FromUserName"]
             received_msg = received_data["Content"]
-            print(received_data)
+            received_time = datetime.datetime.fromtimestamp(int(received_data["CreateTime"]))
+
+            message = Message(sender=user, msg_type=received_data['MsgType'], content=received_data['Content'],
+                              wechat_msg_id=received_data['MsgId'], received_time=received_time)
+            db.session.add(message)
+            db.session.commit()
+
             reply = "I am still working on the server, please be patient.\nYour message: {}".format(received_msg)
 
             response = self.messager.get_response(reply, Config.WECHAT_CONFIG["wechat_id"], user)
