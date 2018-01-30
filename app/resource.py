@@ -57,3 +57,10 @@ class WechatMessageApi(Resource):
 
         else:
             return make_response("Failed to verify message", 200)
+
+
+class FeedApi(Resource):
+    def __init__(self):
+        pass
+
+    def get(self):
