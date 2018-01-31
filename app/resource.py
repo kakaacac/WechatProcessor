@@ -5,9 +5,10 @@ from flask import make_response, request
 
 from .config import Config
 from .utils.messager import WechatMessager
+from .utils.redis import r
 from .models import db, Message
 
-__all__ = ('WechatMessageApi',)
+__all__ = ('WechatMessageApi', 'FeedApi')
 
 class WechatMessageApi(Resource):
     def __init__(self):
@@ -50,7 +51,11 @@ class WechatMessageApi(Resource):
             db.session.add(message)
             db.session.commit()
 
-            reply = "I am still working on the server, please be patient.\nYour message: {}".format(received_msg)
+            if received_msg == "feed":
+                self.add_feeding_task()
+                reply = "Feeding task added."
+            else:
+                reply = "Hello {}!\nYour message: {}".format(user, received_msg)
 
             response = self.messager.get_response(reply, Config.WECHAT_CONFIG["wechat_id"], user)
             return make_response(response, 200)
@@ -58,9 +63,14 @@ class WechatMessageApi(Resource):
         else:
             return make_response("Failed to verify message", 200)
 
+    def add_feeding_task(self):
+        r.set("feed", 1)
+
 
 class FeedApi(Resource):
     def __init__(self):
         pass
 
     def get(self):
+        task = r.getset("feed", 0)
+        return make_response(str(task), 200)
