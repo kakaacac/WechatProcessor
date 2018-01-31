@@ -55,7 +55,7 @@ class WechatMessageApi(Resource):
                 self.add_feeding_task()
                 reply = "Feeding task added."
             else:
-                reply = "Hello {}!\nYour message: {}".format(user, received_msg)
+                reply = "Hello!\nYour message: {}".format(received_msg)
 
             response = self.messager.get_response(reply, Config.WECHAT_CONFIG["wechat_id"], user)
             return make_response(response, 200)
