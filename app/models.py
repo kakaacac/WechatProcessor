@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
+import psycopg2
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
+from .config import Config
+
+
+db_conf = Config.PG_CONFIG
 db = SQLAlchemy()
+con = psycopg2.connect(dbname="ltt", user=db_conf["user"], password=db_conf["password"])
 
 class Message(db.Model):
     message_id = db.Column(UUID, primary_key=True)
@@ -26,3 +32,7 @@ class Message(db.Model):
 
         if received_time is not None:
             self.received_time = received_time
+
+
+def get_cursor():
+    return con.cursor()

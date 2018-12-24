@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import datetime
 from flask_restful import Resource, reqparse
-from flask import make_response, request
+from flask import make_response, request, jsonify
 
 from .config import Config
 from .utils.messager import WechatMessager
 from .utils.redis import r
-from .models import db, Message
+from .models import db, Message, get_cursor
 
-__all__ = ('WechatMessageApi', 'FeedApi')
+__all__ = ('WechatMessageApi', 'FeedApi', 'FeedbackApi')
 
 class WechatMessageApi(Resource):
     def __init__(self):
@@ -74,3 +74,18 @@ class FeedApi(Resource):
     def get(self):
         task = r.getset("feed", 0)
         return make_response(str(task), 200)
+
+
+class FeedbackApi(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        super().__init__()
+
+    def post(self):
+        self.parser.add_argument("text", location='args', store_missing=False)
+        args = self.parser.parse_args()
+
+        cur = get_cursor()
+        text = ("%{}%".format(args.get("text", "")))
+        cur.execute("SELECT student_name, feedback from feedback where feedback LIKE %s", text)
+        return jsonify({"result": list(cur.fetchall())})
