@@ -2,7 +2,7 @@
 from flask import Flask
 from flask_restful import Api
 
-from app.resource import WechatMessageApi, FeedApi
+from app.resource import WechatMessageApi, FeedApi, FeedbackApi
 from app.models import db
 from app.config import Config
 
@@ -18,6 +18,7 @@ api = Api(app, prefix="/wechat")
 
 api.add_resource(WechatMessageApi, "/message")
 api.add_resource(FeedApi, "/feed")
+api.add_resource(FeedbackApi, "/feedback")
 
 if __name__ == '__main__':
     app.run(debug=True)
