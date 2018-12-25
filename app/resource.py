@@ -82,10 +82,10 @@ class FeedbackApi(Resource):
         super().__init__()
 
     def post(self):
-        self.parser.add_argument("text", location='args', store_missing=False)
+        self.parser.add_argument("text", location='form', store_missing=False)
         args = self.parser.parse_args()
 
         cur = get_cursor()
-        text = ("%{}%".format(args.get("text", "")))
+        text = ("%{}%".format(args.get("text", "")), )
         cur.execute("SELECT student_name, feedback from feedback where feedback LIKE %s", text)
         return jsonify({"result": list(cur.fetchall())})
