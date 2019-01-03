@@ -87,5 +87,5 @@ class FeedbackApi(Resource):
 
         cur = get_cursor()
         text = ("%{}%".format(args.get("text", "")), )
-        cur.execute("SELECT student_name, feedback from feedback where feedback LIKE %s", text)
+        cur.execute("SELECT student_name, content from sentence where content LIKE %s", text)
         return jsonify({"result": list(cur.fetchall())})
