@@ -88,7 +88,7 @@ class FeedbackApi(Resource):
 
         cur = get_cursor()
         text = ("%{}%".format(args.get("text", "")), )
-        fb_type = args.get("fb_type", 0)
+        fb_type = int(args.get("fb_type", 0))
         if fb_type == 0:        # lesson content
             cur.execute("SELECT lesson_num, lesson_date, lesson_content, code FROM lesson INNER JOIN class "
                         "ON lesson.class_id=class.id WHERE lesson_content LIKE %s", text)
