@@ -83,9 +83,22 @@ class FeedbackApi(Resource):
 
     def post(self):
         self.parser.add_argument("text", location='form', store_missing=False)
+        self.parser.add_argument("fb_type", location='form', store_missing=False)
         args = self.parser.parse_args()
 
         cur = get_cursor()
         text = ("%{}%".format(args.get("text", "")), )
-        cur.execute("SELECT student_name, content from sentence where content LIKE %s", text)
-        return jsonify({"result": list(cur.fetchall())})
+        fb_type = args.get("fb_type", 0)
+        if fb_type == 0:        # lesson content
+            cur.execute("SELECT lesson_num, lesson_date, lesson_content, code FROM lesson INNER JOIN class "
+                        "ON lesson.class_id=class.id WHERE lesson_content LIKE %s", text)
+            result = [("{} -- {} ({})".format(row[3], row[0], row[1]), row[2]) for row in cur.fetchall()]
+        elif fb_type == 1:      # homework
+            cur.execute("SELECT lesson_num, lesson_date, homework, code FROM lesson INNER JOIN class "
+                        "ON lesson.class_id=class.id WHERE homework LIKE %s", text)
+            result = [("{} -- {} ({})".format(row[3], row[0], row[1]), row[2]) for row in cur.fetchall()]
+        else:                   # personal feedback
+            cur.execute("SELECT student_name, content from sentence where content LIKE %s", text)
+            result = list(cur.fetchall())
+
+        return jsonify({"result": result})
